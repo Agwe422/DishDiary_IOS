@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="23065" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
+    <entity name="DishNote" syncable="YES">
+        <attribute name="id" optional="NO" attributeType="UUID"/>
+        <attribute name="imagePaths" optional="YES" attributeType="Transformable" allowsExternalBinaryDataStorage="YES" valueTransformerName="NSSecureUnarchiveFromData"/>
+        <attribute name="name" optional="NO" attributeType="String"/>
+        <attribute name="note" optional="NO" attributeType="String"/>
+        <attribute name="rating" optional="YES" attributeType="Double" usesScalarValueType="NO"/>
+        <relationship name="restaurant" optional="YES" minCount="0" maxCount="1" deletionRule="Nullify" destinationEntity="Restaurant" inverseName="dishNotes" inverseEntity="Restaurant"/>
+    </entity>
+    <entity name="Restaurant" syncable="YES">
+        <attribute name="address" optional="YES" attributeType="String"/>
+        <attribute name="id" optional="NO" attributeType="UUID"/>
+        <attribute name="name" optional="NO" attributeType="String"/>
+        <relationship name="dishNotes" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="DishNote" inverseName="restaurant" inverseEntity="DishNote"/>
+    </entity>
+    <elements>
+        <element name="DishNote" positionX="-63" positionY="-18" width="128" height="134"/>
+        <element name="Restaurant" positionX="107" positionY="-18" width="128" height="104"/>
+    </elements>
+</model>
