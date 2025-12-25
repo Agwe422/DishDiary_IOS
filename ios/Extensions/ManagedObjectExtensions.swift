@@ -1,3 +1,4 @@
+import CoreData
 import Foundation
 
 extension Restaurant {
@@ -13,5 +14,5 @@ extension DishNote {
     var wrappedName: String { name ?? "" }
     var wrappedNote: String { note ?? "" }
     var imagePathList: [String] { (imagePaths as? [String]) ?? [] }
-    var ratingValue: Double? { (rating as? NSNumber)?.doubleValue }
+    var ratingValue: Double? { rating?.doubleValue }
 }

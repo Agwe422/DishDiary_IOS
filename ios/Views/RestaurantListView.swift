@@ -1,4 +1,5 @@
 import SwiftUI
+import CoreData
 
 struct RestaurantListView: View {
     @Environment(\.managedObjectContext) private var context

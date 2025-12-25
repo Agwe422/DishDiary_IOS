@@ -1,5 +1,6 @@
 import Kingfisher
 import SwiftUI
+import UIKit
 
 struct DishNoteFormView: View {
     @Environment(\.managedObjectContext) private var context
@@ -137,16 +138,18 @@ struct DishNoteFormView: View {
                     Button("Save") { save() }
                         .disabled(!isValid)
                 }
-                if dishNote != nil {
-                    ToolbarItem(placement: .bottomBar) {
+            }
+            .toolbar {
+                ToolbarItemGroup(placement: .bottomBar) {
+                    if let dishNote = dishNote {
                         Button(role: .destructive) {
-                            if let dishNote {
-                                repository.deleteDishNote(dishNote)
-                            }
+                            repository.deleteDishNote(dishNote)
                             dismiss()
                         } label: {
                             Label("Delete Note", systemImage: "trash")
                         }
+                    } else {
+                        EmptyView()
                     }
                 }
             }

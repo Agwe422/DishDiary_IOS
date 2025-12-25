@@ -4,6 +4,10 @@
 <dict>
 	<key>CFBundleDisplayName</key>
 	<string>Dish Diary</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Allow Dish Diary to capture dish photos.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

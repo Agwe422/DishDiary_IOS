@@ -44,7 +44,7 @@ struct DishDiaryRepository {
             dishNote.rating = nil
         }
         dishNote.note = note
-        dishNote.imagePaths = imagePaths
+        dishNote.imagePaths = imagePaths as NSObject
         dishNote.restaurant = restaurant
         saveContext()
     }
@@ -57,7 +57,7 @@ struct DishDiaryRepository {
             dishNote.rating = nil
         }
         dishNote.note = note
-        dishNote.imagePaths = imagePaths
+        dishNote.imagePaths = imagePaths as NSObject
         saveContext()
     }
 

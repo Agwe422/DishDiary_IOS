@@ -1,5 +1,6 @@
 import Kingfisher
 import SwiftUI
+import CoreData
 
 struct RestaurantDetailView: View {
     @Environment(\.managedObjectContext) private var context
