@@ -8,6 +8,7 @@ extension Restaurant {
         let set = dishNotes as? Set<DishNote> ?? []
         return set.sorted { ($0.wrappedName.localizedCaseInsensitiveCompare($1.wrappedName) == .orderedAscending) }
     }
+    var createdDate: Date { createdAt ?? Date.distantPast }
 }
 
 extension DishNote {
@@ -15,4 +16,5 @@ extension DishNote {
     var wrappedNote: String { note ?? "" }
     var imagePathList: [String] { (imagePaths as? [String]) ?? [] }
     var ratingValue: Double? { rating?.doubleValue }
+    var createdDate: Date { createdAt ?? Date.distantPast }
 }

@@ -2,6 +2,7 @@
 <model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="23065" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
     <entity name="DishNote" representedClassName="DishNote" moduleName="DishDiary" codeGenerationType="class" syncable="YES">
         <attribute name="id" optional="NO" attributeType="UUID"/>
+        <attribute name="createdAt" optional="YES" attributeType="Date"/>
         <attribute name="imagePaths" optional="YES" attributeType="Transformable" allowsExternalBinaryDataStorage="YES" valueTransformerName="NSSecureUnarchiveFromData"/>
         <attribute name="name" optional="NO" attributeType="String"/>
         <attribute name="note" optional="NO" attributeType="String"/>
@@ -10,6 +11,7 @@
     </entity>
     <entity name="Restaurant" representedClassName="Restaurant" moduleName="DishDiary" codeGenerationType="class" syncable="YES">
         <attribute name="address" optional="YES" attributeType="String"/>
+        <attribute name="createdAt" optional="YES" attributeType="Date"/>
         <attribute name="id" optional="NO" attributeType="UUID"/>
         <attribute name="name" optional="NO" attributeType="String"/>
         <relationship name="dishNotes" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="DishNote" inverseName="restaurant" inverseEntity="DishNote"/>

@@ -11,7 +11,7 @@ struct RestaurantDetailView: View {
     @FetchRequest private var dishNotes: FetchedResults<DishNote>
 
     @State private var searchText = ""
-    @State private var sortAscending = true
+    @State private var sortOption: SortOption = .nameAsc
     @State private var showingAddNote = false
     @State private var showingRestaurantForm = false
     @State private var noteSelection: NSManagedObjectID?
@@ -25,6 +25,13 @@ struct RestaurantDetailView: View {
         DishDiaryRepository(context: context)
     }
 
+    private enum SortOption: String, CaseIterable {
+        case nameAsc = "Name A–Z"
+        case nameDesc = "Name Z–A"
+        case recent = "Newest"
+        case oldest = "Oldest"
+    }
+
     private var filteredNotes: [DishNote] {
         dishNotes
             .filter { note in
@@ -33,9 +40,16 @@ struct RestaurantDetailView: View {
                 return note.wrappedName.lowercased().contains(query) || note.wrappedNote.lowercased().contains(query)
             }
             .sorted { lhs, rhs in
-                let lhsName = lhs.wrappedName.lowercased()
-                let rhsName = rhs.wrappedName.lowercased()
-                return sortAscending ? lhsName < rhsName : lhsName > rhsName
+                switch sortOption {
+                case .nameAsc:
+                    return lhs.wrappedName.localizedCaseInsensitiveCompare(rhs.wrappedName) == .orderedAscending
+                case .nameDesc:
+                    return lhs.wrappedName.localizedCaseInsensitiveCompare(rhs.wrappedName) == .orderedDescending
+                case .recent:
+                    return lhs.createdDate > rhs.createdDate
+                case .oldest:
+                    return lhs.createdDate < rhs.createdDate
+                }
             }
     }
 
@@ -96,10 +110,15 @@ struct RestaurantDetailView: View {
                 HStack {
                     Text("Dish Notes")
                     Spacer()
-                    Button(action: { sortAscending.toggle() }) {
+                    Menu {
+                        Picker("Sort", selection: $sortOption) {
+                            ForEach(SortOption.allCases, id: \.self) { option in
+                                Text(option.rawValue).tag(option)
+                            }
+                        }
+                    } label: {
                         Image(systemName: "arrow.up.arrow.down.circle")
                     }
-                    .buttonStyle(.borderless)
                 }
             }
         }

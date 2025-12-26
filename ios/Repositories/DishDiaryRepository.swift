@@ -16,6 +16,9 @@ struct DishDiaryRepository {
         restaurant.id = restaurant.id ?? UUID()
         restaurant.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         restaurant.address = address?.trimmingCharacters(in: .whitespacesAndNewlines)
+        if restaurant.createdAt == nil {
+            restaurant.createdAt = Date()
+        }
         saveContext()
         return restaurant
     }
@@ -46,6 +49,9 @@ struct DishDiaryRepository {
         dishNote.note = note
         dishNote.imagePaths = imagePaths as NSObject
         dishNote.restaurant = restaurant
+        if dishNote.createdAt == nil {
+            dishNote.createdAt = Date()
+        }
         saveContext()
     }
 

@@ -10,11 +10,18 @@ struct RestaurantListView: View {
     private var restaurants: FetchedResults<Restaurant>
 
     @State private var searchText = ""
-    @State private var sortAscending = true
+    @State private var sortOption: SortOption = .nameAsc
     @State private var showingAddRestaurant = false
 
     private var repository: DishDiaryRepository {
         DishDiaryRepository(context: context)
+    }
+
+    private enum SortOption: String, CaseIterable {
+        case nameAsc = "Name A–Z"
+        case nameDesc = "Name Z–A"
+        case recent = "Newest"
+        case oldest = "Oldest"
     }
 
     private var filteredRestaurants: [Restaurant] {
@@ -27,9 +34,16 @@ struct RestaurantListView: View {
                 return matchesName || matchesAddress
             }
             .sorted { lhs, rhs in
-                let lhsName = lhs.wrappedName.lowercased()
-                let rhsName = rhs.wrappedName.lowercased()
-                return sortAscending ? lhsName < rhsName : lhsName > rhsName
+                switch sortOption {
+                case .nameAsc:
+                    return lhs.wrappedName.localizedCaseInsensitiveCompare(rhs.wrappedName) == .orderedAscending
+                case .nameDesc:
+                    return lhs.wrappedName.localizedCaseInsensitiveCompare(rhs.wrappedName) == .orderedDescending
+                case .recent:
+                    return lhs.createdDate > rhs.createdDate
+                case .oldest:
+                    return lhs.createdDate < rhs.createdDate
+                }
             }
     }
 
@@ -69,8 +83,14 @@ struct RestaurantListView: View {
             .navigationTitle("Dish Diary")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button(action: { sortAscending.toggle() }) {
-                        Label(sortAscending ? "A–Z" : "Z–A", systemImage: "arrow.up.arrow.down")
+                    Menu {
+                        Picker("Sort", selection: $sortOption) {
+                            ForEach(SortOption.allCases, id: \.self) { option in
+                                Text(option.rawValue).tag(option)
+                            }
+                        }
+                    } label: {
+                        Label("Sort", systemImage: "arrow.up.arrow.down.circle")
                     }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
