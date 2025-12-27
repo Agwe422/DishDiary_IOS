@@ -30,6 +30,8 @@ struct RestaurantDetailView: View {
         case nameDesc = "Name Z–A"
         case recent = "Newest"
         case oldest = "Oldest"
+        case ratingHigh = "Rating High–Low"
+        case ratingLow = "Rating Low–High"
     }
 
     private var filteredNotes: [DishNote] {
@@ -49,6 +51,20 @@ struct RestaurantDetailView: View {
                     return lhs.createdDate > rhs.createdDate
                 case .oldest:
                     return lhs.createdDate < rhs.createdDate
+                case .ratingHigh:
+                    let leftRating = lhs.ratingValue ?? -Double.greatestFiniteMagnitude
+                    let rightRating = rhs.ratingValue ?? -Double.greatestFiniteMagnitude
+                    if leftRating == rightRating {
+                        return lhs.createdDate > rhs.createdDate
+                    }
+                    return leftRating > rightRating
+                case .ratingLow:
+                    let leftRating = lhs.ratingValue ?? Double.greatestFiniteMagnitude
+                    let rightRating = rhs.ratingValue ?? Double.greatestFiniteMagnitude
+                    if leftRating == rightRating {
+                        return lhs.createdDate > rhs.createdDate
+                    }
+                    return leftRating < rightRating
                 }
             }
     }
