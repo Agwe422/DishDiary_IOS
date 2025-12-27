@@ -41,6 +41,21 @@ struct DishNoteRowView: View {
                 .buttonStyle(.borderless)
             }
 
+            HStack(spacing: 12) {
+                Label(note.createdDate, formatter: DateFormatter.shortDate) {
+                    Text("Created")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+                Label(note.updatedDate, formatter: DateFormatter.shortDate) {
+                    Text("Updated")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+            }
+            .font(.caption2)
+            .foregroundColor(.secondary)
+
             if !images.isEmpty {
                 HStack(spacing: 8) {
                     ForEach(Array(images.prefix(3).enumerated()), id: \.offset) { index, path in

@@ -3,6 +3,7 @@
     <entity name="DishNote" representedClassName="DishNote" moduleName="DishDiary" codeGenerationType="class" syncable="YES">
         <attribute name="id" optional="NO" attributeType="UUID"/>
         <attribute name="createdAt" optional="YES" attributeType="Date"/>
+        <attribute name="updatedAt" optional="YES" attributeType="Date"/>
         <attribute name="imagePaths" optional="YES" attributeType="Transformable" allowsExternalBinaryDataStorage="YES" valueTransformerName="NSSecureUnarchiveFromData"/>
         <attribute name="name" optional="NO" attributeType="String"/>
         <attribute name="note" optional="NO" attributeType="String"/>

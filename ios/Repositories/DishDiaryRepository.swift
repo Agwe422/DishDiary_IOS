@@ -52,6 +52,7 @@ struct DishDiaryRepository {
         if dishNote.createdAt == nil {
             dishNote.createdAt = Date()
         }
+        dishNote.updatedAt = dishNote.createdAt
         saveContext()
     }
 
@@ -64,6 +65,7 @@ struct DishDiaryRepository {
         }
         dishNote.note = note
         dishNote.imagePaths = imagePaths as NSObject
+        dishNote.updatedAt = Date()
         saveContext()
     }
 

@@ -17,4 +17,5 @@ extension DishNote {
     var imagePathList: [String] { (imagePaths as? [String]) ?? [] }
     var ratingValue: Double? { rating?.doubleValue }
     var createdDate: Date { createdAt ?? Date.distantPast }
+    var updatedDate: Date { updatedAt ?? createdDate }
 }
