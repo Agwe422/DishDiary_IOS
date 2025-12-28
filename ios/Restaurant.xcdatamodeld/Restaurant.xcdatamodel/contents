@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="23065" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
-    <entity name="DishNote" representedClassName="DishNote" moduleName="DishDiary" codeGenerationType="class" syncable="YES">
+    <entity name="DishNote" representedClassName="DishNote" moduleName="DishDiary" codeGenerationType="manual" syncable="YES">
         <attribute name="id" optional="NO" attributeType="UUID"/>
         <attribute name="createdAt" optional="YES" attributeType="Date"/>
         <attribute name="updatedAt" optional="YES" attributeType="Date"/>
@@ -10,7 +10,7 @@
         <attribute name="rating" optional="YES" attributeType="Double" usesScalarValueType="NO"/>
         <relationship name="restaurant" optional="YES" minCount="0" maxCount="1" deletionRule="Nullify" destinationEntity="Restaurant" inverseName="dishNotes" inverseEntity="Restaurant"/>
     </entity>
-    <entity name="Restaurant" representedClassName="Restaurant" moduleName="DishDiary" codeGenerationType="class" syncable="YES">
+    <entity name="Restaurant" representedClassName="Restaurant" moduleName="DishDiary" codeGenerationType="manual" syncable="YES">
         <attribute name="address" optional="YES" attributeType="String"/>
         <attribute name="createdAt" optional="YES" attributeType="Date"/>
         <attribute name="id" optional="NO" attributeType="UUID"/>

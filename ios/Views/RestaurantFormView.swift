@@ -1,20 +1,26 @@
+import SwiftData
 import SwiftUI
 
-struct RestaurantFormView: View {
+struct RestaurantEditorView: View {
+    @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
 
-    var restaurant: Restaurant?
-    var onSave: ((String, String) -> Void)?
+    let restaurant: Restaurant?
 
     @State private var name: String
-    @State private var address: String
+    @State private var latitude: String
+    @State private var longitude: String
     @State private var showValidation = false
 
-    init(restaurant: Restaurant?, onSave: ((String, String) -> Void)? = nil) {
+    private var repository: DishDiaryRepository {
+        DishDiaryRepository(context: context)
+    }
+
+    init(restaurant: Restaurant?) {
         self.restaurant = restaurant
-        self.onSave = onSave
-        _name = State(initialValue: restaurant?.wrappedName ?? "")
-        _address = State(initialValue: restaurant?.wrappedAddress ?? "")
+        _name = State(initialValue: restaurant?.name ?? "")
+        _latitude = State(initialValue: restaurant?.latitude != nil ? String(restaurant?.latitude ?? 0) : "")
+        _longitude = State(initialValue: restaurant?.longitude != nil ? String(restaurant?.longitude ?? 0) : "")
     }
 
     private var isValid: Bool {
@@ -22,37 +28,53 @@ struct RestaurantFormView: View {
     }
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
-                Section(header: Text("Details")) {
+                Section("Restaurant") {
                     TextField("Name", text: $name)
                         .onChange(of: name) { _ in showValidation = true }
-                    TextField("Address (optional)", text: $address)
+                    TextField("Latitude (optional)", text: $latitude)
+                        .keyboardType(.numbersAndPunctuation)
+                    TextField("Longitude (optional)", text: $longitude)
+                        .keyboardType(.numbersAndPunctuation)
 
                     if showValidation && !isValid {
                         Text("Name is required")
-                            .foregroundColor(.red)
+                            .foregroundColor(BistroTheme.bad)
                             .font(.footnote)
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(BistroTheme.canvas)
             .navigationTitle(restaurant == nil ? "Add Restaurant" : "Edit Restaurant")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        guard isValid else {
-                            showValidation = true
-                            return
-                        }
-                        onSave?(name, address)
-                        dismiss()
-                    }
-                    .disabled(!isValid)
+                    Button("Save") { save() }
+                        .disabled(!isValid)
                 }
             }
         }
+    }
+
+    private func save() {
+        guard isValid else {
+            showValidation = true
+            return
+        }
+
+        let latValue = Double(latitude.trimmingCharacters(in: .whitespacesAndNewlines))
+        let lonValue = Double(longitude.trimmingCharacters(in: .whitespacesAndNewlines))
+
+        if let restaurant {
+            repository.updateRestaurant(restaurant, name: name, latitude: latValue, longitude: lonValue)
+        } else {
+            _ = repository.addRestaurant(name: name, latitude: latValue, longitude: lonValue)
+        }
+
+        dismiss()
     }
 }

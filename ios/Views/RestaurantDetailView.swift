@@ -1,156 +1,86 @@
-import Kingfisher
+import SwiftData
 import SwiftUI
-import CoreData
 
 struct RestaurantDetailView: View {
-    @Environment(\.managedObjectContext) private var context
+    @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
 
-    @ObservedObject var restaurant: Restaurant
-
-    @FetchRequest private var dishNotes: FetchedResults<DishNote>
+    let restaurant: Restaurant
 
     @State private var searchText = ""
-    @State private var sortOption: SortOption = .nameAsc
-    @State private var showingAddNote = false
-    @State private var showingRestaurantForm = false
-    @State private var noteSelection: NSManagedObjectID?
-    @State private var noteToDelete: DishNote?
-    @State private var showDeleteRestaurantConfirm = false
-    @State private var selectedImages: [String] = []
-    @State private var selectedImageIndex = 0
-    @State private var showImageViewer = false
+    @State private var sortOption: DishSortOption = .dateEatenDesc
+    @State private var showingEditor = false
+    @State private var showingRestaurantEditor = false
+    @State private var showDeleteConfirm = false
 
     private var repository: DishDiaryRepository {
         DishDiaryRepository(context: context)
     }
 
-    private enum SortOption: String, CaseIterable {
-        case nameAsc = "Name A–Z"
-        case nameDesc = "Name Z–A"
-        case recent = "Newest"
-        case oldest = "Oldest"
-        case ratingHigh = "Rating High–Low"
-        case ratingLow = "Rating Low–High"
-    }
-
-    private var filteredNotes: [DishNote] {
-        dishNotes
-            .filter { note in
-                guard !searchText.isEmpty else { return true }
-                let query = searchText.lowercased()
-                return note.wrappedName.lowercased().contains(query) || note.wrappedNote.lowercased().contains(query)
-            }
-            .sorted { lhs, rhs in
-                switch sortOption {
-                case .nameAsc:
-                    return lhs.wrappedName.localizedCaseInsensitiveCompare(rhs.wrappedName) == .orderedAscending
-                case .nameDesc:
-                    return lhs.wrappedName.localizedCaseInsensitiveCompare(rhs.wrappedName) == .orderedDescending
-                case .recent:
-                    return lhs.createdDate > rhs.createdDate
-                case .oldest:
-                    return lhs.createdDate < rhs.createdDate
-                case .ratingHigh:
-                    let leftRating = lhs.ratingValue ?? -Double.greatestFiniteMagnitude
-                    let rightRating = rhs.ratingValue ?? -Double.greatestFiniteMagnitude
-                    if leftRating == rightRating {
-                        return lhs.createdDate > rhs.createdDate
-                    }
-                    return leftRating > rightRating
-                case .ratingLow:
-                    let leftRating = lhs.ratingValue ?? Double.greatestFiniteMagnitude
-                    let rightRating = rhs.ratingValue ?? Double.greatestFiniteMagnitude
-                    if leftRating == rightRating {
-                        return lhs.createdDate > rhs.createdDate
-                    }
-                    return leftRating < rightRating
-                }
-            }
-    }
-
-    init(restaurant: Restaurant) {
-        self.restaurant = restaurant
-        _dishNotes = FetchRequest(
-            sortDescriptors: [NSSortDescriptor(keyPath: \DishNote.name, ascending: true)],
-            predicate: NSPredicate(format: "restaurant == %@", restaurant),
-            animation: .default
-        )
+    private var filteredDishes: [Dish] {
+        let filtered = restaurant.dishes.filter { dish in
+            guard !searchText.isEmpty else { return true }
+            let query = searchText.lowercased()
+            let matchName = dish.name.lowercased().contains(query)
+            let matchTags = dish.tags.contains { $0.lowercased().contains(query) }
+            let matchNotes = dish.notes.lowercased().contains(query)
+            return matchName || matchTags || matchNotes
+        }
+        return filtered.sorted(by: sortOption.sorter)
     }
 
     var body: some View {
-        List {
-            if !restaurant.wrappedAddress.isEmpty {
-                Section("Address") {
-                    Text(restaurant.wrappedAddress)
-                        .foregroundColor(.secondary)
-                }
-            }
-
-            Section {
-                ForEach(filteredNotes, id: \.objectID) { note in
-                    DishNoteRowView(
-                        note: note,
-                        onImageTap: { index in
-                            selectedImages = note.imagePathList
-                            selectedImageIndex = index
-                            showImageViewer = true
-                        },
-                        onShowMore: {
-                            noteSelection = note.objectID
-                        }
-                    )
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        noteSelection = note.objectID
-                    }
-                    .background(
-                        NavigationLink(
-                            destination: DishNoteFormView(restaurant: restaurant, dishNote: note),
-                            tag: note.objectID,
-                            selection: $noteSelection
-                        ) {
-                            EmptyView()
-                        }
-                        .hidden()
-                    )
-                        .swipeActions {
-                            Button(role: .destructive) {
-                                noteToDelete = note
-                            } label: {
-                                Label("Delete", systemImage: "trash")
-                            }
-                        }
-                }
-            } header: {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
                 HStack {
-                    Text("Dish Notes")
+                    Text(restaurant.name)
+                        .font(.title2.weight(.bold))
+                        .foregroundColor(BistroTheme.textPrimary)
                     Spacer()
-                    Menu {
-                        Picker("Sort", selection: $sortOption) {
-                            ForEach(SortOption.allCases, id: \.self) { option in
-                                Text(option.rawValue).tag(option)
-                            }
-                        }
-                    } label: {
-                        Image(systemName: "arrow.up.arrow.down.circle")
+                    if let last = restaurant.lastEatenDate {
+                        Text("Last: \(last, formatter: DateFormatter.shortDate)")
+                            .font(.caption)
+                            .foregroundColor(BistroTheme.secondary)
                     }
                 }
+                .padding(.horizontal, 16)
+
+                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                    ForEach(filteredDishes) { dish in
+                        NavigationLink(value: dish.id) {
+                            DishCardView(dish: dish)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 16)
             }
+            .padding(.top, 8)
         }
-        .listStyle(.insetGrouped)
-        .navigationTitle(restaurant.wrappedName)
+        .background(BistroTheme.canvas.ignoresSafeArea())
+        .navigationTitle("Restaurant")
         .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Menu {
+                    Picker("Sort", selection: $sortOption) {
+                        ForEach(DishSortOption.allCases, id: \.self) { option in
+                            Text(option.title).tag(option)
+                        }
+                    }
+                } label: {
+                    Label("Sort", systemImage: "arrow.up.arrow.down.circle")
+                }
+            }
             ToolbarItemGroup(placement: .navigationBarTrailing) {
-                Button(action: { showingAddNote = true }) {
-                    Label("Add Dish Note", systemImage: "plus")
+                Button(action: { showingEditor = true }) {
+                    Label("Add Dish", systemImage: "plus")
                 }
                 Menu {
                     Button("Edit Restaurant") {
-                        showingRestaurantForm = true
+                        showingRestaurantEditor = true
                     }
                     Button(role: .destructive) {
-                        showDeleteRestaurantConfirm = true
+                        showDeleteConfirm = true
                     } label: {
                         Label("Delete Restaurant", systemImage: "trash")
                     }
@@ -159,45 +89,38 @@ struct RestaurantDetailView: View {
                 }
             }
         }
-        .searchable(text: $searchText, prompt: "Search dishes")
-        .sheet(isPresented: $showingAddNote) {
-            DishNoteFormView(restaurant: restaurant, dishNote: nil)
+        .searchable(text: $searchText, prompt: "Search dishes, notes, tags")
+        .sheet(isPresented: $showingEditor) {
+            DishEditorView(dish: nil, presetRestaurant: restaurant)
         }
-        .sheet(isPresented: $showingRestaurantForm) {
-            RestaurantFormView(restaurant: restaurant) { name, address in
-                repository.updateRestaurant(restaurant, name: name, address: address.isEmpty ? nil : address)
-            }
+        .sheet(isPresented: $showingRestaurantEditor) {
+            RestaurantEditorView(restaurant: restaurant)
         }
-        .alert("Delete restaurant?", isPresented: $showDeleteRestaurantConfirm) {
+        .alert("Delete restaurant?", isPresented: $showDeleteConfirm) {
             Button("Delete", role: .destructive) {
                 repository.deleteRestaurant(restaurant)
                 dismiss()
             }
-            Button("Cancel", role: .cancel, action: {})
+            Button("Cancel", role: .cancel) {}
         } message: {
-            Text("This will remove the restaurant and all of its dish notes.")
+            Text("This will remove the restaurant and all dishes.")
         }
-        .alert("Delete this note?", isPresented: Binding(get: { noteToDelete != nil }, set: { value in
-            if !value { noteToDelete = nil }
-        })) {
-            Button("Delete", role: .destructive) {
-                if let note = noteToDelete {
-                    repository.deleteDishNote(note)
-                }
-                noteToDelete = nil
-            }
-            Button("Cancel", role: .cancel) {
-                noteToDelete = nil
-            }
-        } message: {
-            Text("Images will be removed from storage too.")
-        }
-        .fullScreenCover(isPresented: $showImageViewer) {
-            ImageViewer(
-                imagePaths: selectedImages,
-                startIndex: selectedImageIndex,
-                isPresented: $showImageViewer
-            )
+    }
+}
+
+struct DishDetailRouteView: View {
+    @Query private var dishes: [Dish]
+
+    init(dishID: UUID) {
+        _dishes = Query(filter: #Predicate<Dish> { $0.id == dishID })
+    }
+
+    var body: some View {
+        if let dish = dishes.first {
+            DishDetailView(dish: dish)
+        } else {
+            ContentUnavailableView("Dish not found", systemImage: "exclamationmark.triangle")
+                .background(BistroTheme.canvas)
         }
     }
 }

@@ -1,114 +1,118 @@
-import Kingfisher
+import PhotosUI
+import SwiftData
 import SwiftUI
-import UIKit
 
-struct DishNoteFormView: View {
-    @Environment(\.managedObjectContext) private var context
+struct DishEditorView: View {
+    @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
 
-    let restaurant: Restaurant
-    let dishNote: DishNote?
+    let dish: Dish?
+    let presetRestaurant: Restaurant?
+
+    @Query private var restaurants: [Restaurant]
 
     @State private var name: String
-    @State private var ratingText: String
-    @State private var noteText: String
-    @State private var existingImagePaths: [String]
-    @State private var newImages: [UIImage] = []
-    @State private var showPhotoPicker = false
-    @State private var showCamera = false
-    @State private var ratingError: String?
+    @State private var rating: Double
+    @State private var notes: String
+    @State private var tagsText: String
+    @State private var dateEaten: Date
+    @State private var selectedRestaurant: Restaurant?
+    @State private var imageRefs: [String]
+    @State private var pickerItems: [PhotosPickerItem] = []
     @State private var showValidation = false
 
-    private var initialPaths: [String]
+    private let maxImages = 5
 
     private var repository: DishDiaryRepository {
         DishDiaryRepository(context: context)
     }
 
-    private var remainingImageSlots: Int {
-        max(0, 5 - existingImagePaths.count - newImages.count)
+    init(dish: Dish?, presetRestaurant: Restaurant? = nil) {
+        self.dish = dish
+        self.presetRestaurant = presetRestaurant
+        _name = State(initialValue: dish?.name ?? "")
+        _rating = State(initialValue: dish?.rating ?? 0.0)
+        _notes = State(initialValue: dish?.notes ?? "")
+        _tagsText = State(initialValue: dish?.tagDisplay ?? "")
+        _dateEaten = State(initialValue: dish?.dateEaten ?? Date())
+        _selectedRestaurant = State(initialValue: dish?.restaurant ?? presetRestaurant)
+        _imageRefs = State(initialValue: dish?.imageRefs ?? [])
+    }
+
+    private var remainingSlots: Int {
+        max(0, maxImages - imageRefs.count)
     }
 
     private var isValid: Bool {
-        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        return !trimmedName.isEmpty && ratingError == nil
-    }
-
-    init(restaurant: Restaurant, dishNote: DishNote?) {
-        self.restaurant = restaurant
-        self.dishNote = dishNote
-        let initialName = dishNote?.wrappedName ?? ""
-        let initialNote = dishNote?.wrappedNote ?? ""
-        let initialRating = dishNote?.ratingValue
-        let paths = dishNote?.imagePathList ?? []
-
-        _name = State(initialValue: initialName)
-        _noteText = State(initialValue: initialNote)
-        _ratingText = State(initialValue: initialRating != nil ? String(format: "%.1f", initialRating ?? 0) : "")
-        _existingImagePaths = State(initialValue: paths)
-        initialPaths = paths
+        !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
-                Section(header: Text("Dish")) {
+                Section("Dish") {
                     TextField("Name", text: $name)
                         .onChange(of: name) { _ in showValidation = true }
-                    TextField("Rating (1.0 - 10.0)", text: $ratingText)
-                        .keyboardType(.decimalPad)
-                        .onChange(of: ratingText, perform: validateRating)
-                    if let ratingError {
-                        Text(ratingError)
-                            .font(.footnote)
-                            .foregroundColor(.red)
-                    }
-                    if showValidation && name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                        Text("Name is required")
-                            .font(.footnote)
-                            .foregroundColor(.red)
+                    StarRatingControl(rating: $rating)
+                    DatePicker("Date eaten", selection: $dateEaten, displayedComponents: .date)
+                }
+
+                Section("Restaurant") {
+                    Picker("Restaurant", selection: $selectedRestaurant) {
+                        Text("None").tag(Restaurant?.none)
+                        ForEach(restaurants) { restaurant in
+                            Text(restaurant.name).tag(Restaurant?.some(restaurant))
+                        }
                     }
                 }
 
-                Section(header: Text("Notes")) {
-                    TextEditor(text: $noteText)
+                Section("Tags") {
+                    TextField("Comma-separated tags", text: $tagsText)
+                }
+
+                Section("Notes") {
+                    TextEditor(text: $notes)
                         .frame(minHeight: 120)
                 }
 
                 Section(header: HStack {
                     Text("Photos")
                     Spacer()
-                    Text("\(existingImagePaths.count + newImages.count)/5")
+                    Text("\(imageRefs.count)/5")
                         .foregroundColor(.secondary)
                         .font(.footnote)
                 }) {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 12) {
-                            ForEach(Array(existingImagePaths.enumerated()), id: \.offset) { index, path in
-                                imageThumbnail(forPath: path) {
-                                    existingImagePaths.remove(at: index)
-                                }
-                            }
-                            ForEach(Array(newImages.enumerated()), id: \.offset) { index, image in
-                                imageThumbnail(forImage: image) {
-                                    newImages.remove(at: index)
-                                }
-                            }
-                            if remainingImageSlots > 0 {
-                                Menu {
+                            ForEach(imageRefs, id: \.self) { ref in
+                                ZStack(alignment: .topTrailing) {
+                                    DiskImageView(
+                                        ref: ref,
+                                        targetSize: CGSize(width: 200, height: 200),
+                                        contentMode: .fill,
+                                        cornerRadius: 12
+                                    )
+                                    .frame(width: 96, height: 96)
+
                                     Button {
-                                        showPhotoPicker = true
+                                        imageRefs.removeAll { $0 == ref }
                                     } label: {
-                                        Label("Photo Library", systemImage: "photo.on.rectangle")
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundColor(.white)
+                                            .padding(6)
+                                            .background(Color.black.opacity(0.6))
+                                            .clipShape(Circle())
                                     }
-                                    if UIImagePickerController.isSourceTypeAvailable(.camera) {
-                                        Button {
-                                            showCamera = true
-                                        } label: {
-                                            Label("Camera", systemImage: "camera")
-                                        }
-                                    }
-                                } label: {
+                                    .offset(x: 6, y: -6)
+                                }
+                            }
+
+                            if remainingSlots > 0 {
+                                PhotosPicker(
+                                    selection: $pickerItems,
+                                    maxSelectionCount: remainingSlots,
+                                    matching: .images
+                                ) {
                                     VStack(spacing: 8) {
                                         Image(systemName: "plus.circle.fill")
                                             .font(.largeTitle)
@@ -116,11 +120,11 @@ struct DishNoteFormView: View {
                                             .font(.footnote)
                                     }
                                     .frame(width: 96, height: 96)
-                                    .foregroundColor(.accentColor)
+                                    .foregroundColor(BistroTheme.primary)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 12)
                                             .stroke(style: StrokeStyle(lineWidth: 1, dash: [6]))
-                                            .foregroundColor(.accentColor)
+                                            .foregroundColor(BistroTheme.primary)
                                     )
                                 }
                             }
@@ -128,8 +132,16 @@ struct DishNoteFormView: View {
                         .padding(.vertical, 4)
                     }
                 }
+
+                if showValidation && !isValid {
+                    Text("Dish name is required")
+                        .font(.footnote)
+                        .foregroundColor(BistroTheme.bad)
+                }
             }
-            .navigationTitle(dishNote == nil ? "Add Dish Note" : "Edit Dish Note")
+            .scrollContentBackground(.hidden)
+            .background(BistroTheme.canvas)
+            .navigationTitle(dish == nil ? "Add Dish" : "Edit Dish")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -139,113 +151,171 @@ struct DishNoteFormView: View {
                         .disabled(!isValid)
                 }
             }
-            .toolbar {
-                ToolbarItemGroup(placement: .bottomBar) {
-                    if let dishNote = dishNote {
-                        Button(role: .destructive) {
-                            repository.deleteDishNote(dishNote)
-                            dismiss()
-                        } label: {
-                            Label("Delete Note", systemImage: "trash")
-                        }
-                    } else {
-                        EmptyView()
+            .onChange(of: pickerItems) { newItems in
+                Task {
+                    let newRefs = await PhotoPickerLoader.loadImageRefs(from: newItems)
+                    await MainActor.run {
+                        imageRefs.append(contentsOf: newRefs.prefix(remainingSlots))
+                        pickerItems = []
                     }
                 }
             }
-            .sheet(isPresented: $showPhotoPicker) {
-                PhotoPicker(selectionLimit: remainingImageSlots) { images in
-                    let toAdd = images.prefix(remainingImageSlots)
-                    newImages.append(contentsOf: toAdd)
-                }
-            }
-            .sheet(isPresented: $showCamera) {
-                CameraPicker { image in
-                    if let image, remainingImageSlots > 0 {
-                        newImages.append(image)
-                    }
-                }
-            }
-        }
-    }
-
-    private func imageThumbnail(forPath path: String, removeAction: @escaping () -> Void) -> some View {
-        ZStack(alignment: .topTrailing) {
-            KFImage(URL(fileURLWithPath: path))
-                .setProcessor(DownsamplingImageProcessor(size: CGSize(width: 200, height: 200)))
-                .cacheOriginalImage(false)
-                .resizable()
-                .scaledToFill()
-                .frame(width: 96, height: 96)
-                .clipped()
-                .cornerRadius(12)
-
-            Button(action: removeAction) {
-                Image(systemName: "xmark.circle.fill")
-                    .foregroundColor(.white)
-                    .padding(6)
-                    .background(Color.black.opacity(0.6))
-                    .clipShape(Circle())
-            }
-            .offset(x: 6, y: -6)
-        }
-    }
-
-    private func imageThumbnail(forImage image: UIImage, removeAction: @escaping () -> Void) -> some View {
-        ZStack(alignment: .topTrailing) {
-            Image(uiImage: image)
-                .resizable()
-                .scaledToFill()
-                .frame(width: 96, height: 96)
-                .clipped()
-                .cornerRadius(12)
-
-            Button(action: removeAction) {
-                Image(systemName: "xmark.circle.fill")
-                    .foregroundColor(.white)
-                    .padding(6)
-                    .background(Color.black.opacity(0.6))
-                    .clipShape(Circle())
-            }
-            .offset(x: 6, y: -6)
-        }
-    }
-
-    private func validateRating(_ text: String) {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
-            ratingError = nil
-            return
-        }
-        if let value = Double(trimmed), value >= 1.0, value <= 10.0 {
-            ratingError = nil
-        } else {
-            ratingError = "Rating must be between 1.0 and 10.0"
         }
     }
 
     private func save() {
-        showValidation = true
-        guard isValid else { return }
+        guard isValid else {
+            showValidation = true
+            return
+        }
 
-        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        let trimmedNote = noteText
-        let ratingValue = Double(ratingText.trimmingCharacters(in: .whitespacesAndNewlines))
+        let tags = tagsText
+            .split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
 
-        let store = ImageStore()
-        let newPaths = store.saveImages(newImages)
-
-        let removedPaths = initialPaths.filter { !existingImagePaths.contains($0) }
-        store.deleteImages(at: removedPaths)
-
-        let allPaths = existingImagePaths + newPaths
-
-        if let dishNote {
-            repository.updateDishNote(dishNote, name: trimmedName, rating: ratingValue, note: trimmedNote, imagePaths: allPaths)
+        if let dish {
+            let removed = dish.imageRefs.filter { !imageRefs.contains($0) }
+            if !removed.isEmpty {
+                ImageStore.shared.deleteImages(removed)
+            }
+            repository.updateDish(
+                dish,
+                name: name,
+                rating: rating,
+                notes: notes,
+                tags: tags,
+                dateEaten: dateEaten,
+                imageRefs: imageRefs,
+                restaurant: selectedRestaurant
+            )
         } else {
-            repository.addDishNote(to: restaurant, name: trimmedName, rating: ratingValue, note: trimmedNote, imagePaths: allPaths)
+            _ = repository.addDish(
+                name: name,
+                rating: rating,
+                notes: notes,
+                tags: tags,
+                dateEaten: dateEaten,
+                imageRefs: imageRefs,
+                restaurant: selectedRestaurant
+            )
         }
 
         dismiss()
+    }
+}
+
+struct DishDetailView: View {
+    @Environment(\.modelContext) private var context
+    @Environment(\.dismiss) private var dismiss
+
+    let dish: Dish
+
+    @State private var showingGallery = false
+    @State private var selectedImageIndex = 0
+    @State private var showingEditor = false
+    @State private var showDeleteConfirm = false
+
+    private var repository: DishDiaryRepository {
+        DishDiaryRepository(context: context)
+    }
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                if !dish.imageRefs.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 12) {
+                            ForEach(Array(dish.imageRefs.enumerated()), id: \.offset) { index, ref in
+                                Button {
+                                    selectedImageIndex = index
+                                    showingGallery = true
+                                } label: {
+                                    DiskImageView(
+                                        ref: ref,
+                                        targetSize: CGSize(width: 320, height: 240),
+                                        contentMode: .fill,
+                                        cornerRadius: 16
+                                    )
+                                    .frame(width: 200, height: 140)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(dish.name)
+                        .font(.title2.weight(.bold))
+                        .foregroundColor(BistroTheme.textPrimary)
+                    if let restaurant = dish.restaurant?.name {
+                        Text(restaurant)
+                            .font(.headline)
+                            .foregroundColor(BistroTheme.secondary)
+                    }
+                    StarRatingDisplay(rating: dish.rating, size: 18)
+                }
+                .padding(.horizontal, 16)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Eaten: \(dish.dateEaten, formatter: DateFormatter.shortDate)")
+                    Text("Created: \(dish.createdAt, formatter: DateFormatter.shortDate)")
+                    Text("Updated: \(dish.updatedAt, formatter: DateFormatter.shortDate)")
+                }
+                .font(.caption)
+                .foregroundColor(BistroTheme.secondary)
+                .padding(.horizontal, 16)
+
+                if !dish.tags.isEmpty {
+                    Text(dish.tagDisplay)
+                        .font(.caption)
+                        .foregroundColor(BistroTheme.secondary)
+                        .padding(.horizontal, 16)
+                }
+
+                if !dish.notes.isEmpty {
+                    Text(dish.notes)
+                        .font(.body)
+                        .foregroundColor(BistroTheme.textPrimary)
+                        .padding(.horizontal, 16)
+                }
+            }
+            .padding(.vertical, 12)
+        }
+        .background(BistroTheme.canvas.ignoresSafeArea())
+        .navigationTitle("Dish Detail")
+        .toolbar {
+            ToolbarItemGroup(placement: .navigationBarTrailing) {
+                Button("Edit") {
+                    showingEditor = true
+                }
+                Button(role: .destructive) {
+                    showDeleteConfirm = true
+                } label: {
+                    Image(systemName: "trash")
+                }
+            }
+        }
+        .sheet(isPresented: $showingEditor) {
+            DishEditorView(dish: dish)
+        }
+        .fullScreenCover(isPresented: $showingGallery) {
+            GalleryView(
+                imageRefs: dish.imageRefs,
+                startIndex: selectedImageIndex,
+                isPresented: $showingGallery
+            )
+        }
+        .alert("Delete dish?", isPresented: $showDeleteConfirm) {
+            Button("Delete", role: .destructive) {
+                repository.deleteDish(dish)
+                dismiss()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This will remove the dish and its photos.")
+        }
     }
 }
