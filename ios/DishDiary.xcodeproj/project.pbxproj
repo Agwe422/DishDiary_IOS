@@ -22,6 +22,8 @@
 		AABBCCDDEEFF00112233448C /* Restaurant.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = AABBCCDDEEFF001122334472 /* Restaurant.xcdatamodeld */; };
 		AABBCCDDEEFF00112233448D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AABBCCDDEEFF00112233446F /* Assets.xcassets */; };
 		AABBCCDDEEFF00112233448E /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AABBCCDDEEFF001122334470 /* LaunchScreen.storyboard */; };
+		AABBCCDDEEFF00112233448F /* LegacyDishNote.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABBCCDDEEFF001122334491 /* LegacyDishNote.swift */; };
+		AABBCCDDEEFF001122334490 /* LegacyRestaurant.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABBCCDDEEFF001122334492 /* LegacyRestaurant.swift */; };
 		ABCDEF1234567890ABCDEF12 /* DateFormatter+Short.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1C2B3A4F5E6D7C8B9A0F1E2 /* DateFormatter+Short.swift */; };
 /* End PBXBuildFile section */
 
@@ -43,6 +45,8 @@
 		AABBCCDDEEFF001122334471 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AABBCCDDEEFF001122334472 /* Restaurant.xcdatamodeld */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodeld; path = Restaurant.xcdatamodeld; sourceTree = "<group>"; };
 		AABBCCDDEEFF001122334473 /* DishDiary.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DishDiary.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AABBCCDDEEFF001122334491 /* LegacyDishNote.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyDishNote.swift; sourceTree = "<group>"; };
+		AABBCCDDEEFF001122334492 /* LegacyRestaurant.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyRestaurant.swift; sourceTree = "<group>"; };
 		D1C2B3A4F5E6D7C8B9A0F1E2 /* DateFormatter+Short.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DateFormatter+Short.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -82,6 +86,7 @@
 			children = (
 				AABBCCDDEEFF001122334463 /* DishDiaryApp.swift */,
 				AABBCCDDEEFF00112233445D /* Persistence */,
+				AABBCCDDEEFF001122334493 /* LegacyCoreData */,
 				AABBCCDDEEFF00112233445E /* Storage */,
 				AABBCCDDEEFF00112233445F /* Repositories */,
 				AABBCCDDEEFF001122334460 /* Utilities */,
@@ -97,6 +102,15 @@
 				AABBCCDDEEFF001122334464 /* PersistenceController.swift */,
 			);
 			path = Persistence;
+			sourceTree = "<group>";
+		};
+		AABBCCDDEEFF001122334493 /* LegacyCoreData */ = {
+			isa = PBXGroup;
+			children = (
+				AABBCCDDEEFF001122334491 /* LegacyDishNote.swift */,
+				AABBCCDDEEFF001122334492 /* LegacyRestaurant.swift */,
+			);
+			path = LegacyCoreData;
 			sourceTree = "<group>";
 		};
 		AABBCCDDEEFF00112233445E /* Storage */ = {
@@ -216,6 +230,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				AABBCCDDEEFF00112233448C /* Restaurant.xcdatamodeld in Sources */,
+				AABBCCDDEEFF00112233448F /* LegacyDishNote.swift in Sources */,
+				AABBCCDDEEFF001122334490 /* LegacyRestaurant.swift in Sources */,
 				AABBCCDDEEFF00112233448B /* ImageViewer.swift in Sources */,
 				AABBCCDDEEFF00112233448A /* DishNoteFormView.swift in Sources */,
 				AABBCCDDEEFF001122334489 /* RestaurantFormView.swift in Sources */,

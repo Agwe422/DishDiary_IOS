@@ -3,6 +3,7 @@ import SwiftData
 import UIKit
 import UniformTypeIdentifiers
 
+@MainActor
 struct DishDiaryRepository {
     let context: ModelContext
     let imageStore: ImageStore

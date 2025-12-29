@@ -1,6 +1,7 @@
 import CoreData
 import SwiftData
 
+@MainActor
 enum LegacyCoreDataImporter {
     private static let migrationKey = "didImportLegacyCoreData"
 
