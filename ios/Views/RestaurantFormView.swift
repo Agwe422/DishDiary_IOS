@@ -8,8 +8,7 @@ struct RestaurantEditorView: View {
     let restaurant: Restaurant?
 
     @State private var name: String
-    @State private var latitude: String
-    @State private var longitude: String
+    @State private var address: String
     @State private var showValidation = false
 
     private var repository: DishDiaryRepository {
@@ -19,12 +18,12 @@ struct RestaurantEditorView: View {
     init(restaurant: Restaurant?) {
         self.restaurant = restaurant
         _name = State(initialValue: restaurant?.name ?? "")
-        _latitude = State(initialValue: restaurant?.latitude != nil ? String(restaurant?.latitude ?? 0) : "")
-        _longitude = State(initialValue: restaurant?.longitude != nil ? String(restaurant?.longitude ?? 0) : "")
+        _address = State(initialValue: restaurant?.address ?? "")
     }
 
     private var isValid: Bool {
         !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && !address.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     var body: some View {
@@ -33,13 +32,11 @@ struct RestaurantEditorView: View {
                 Section("Restaurant") {
                     TextField("Name", text: $name)
                         .onChange(of: name) { _ in showValidation = true }
-                    TextField("Latitude (optional)", text: $latitude)
-                        .keyboardType(.numbersAndPunctuation)
-                    TextField("Longitude (optional)", text: $longitude)
-                        .keyboardType(.numbersAndPunctuation)
+                    TextField("Street address", text: $address)
+                        .onChange(of: address) { _ in showValidation = true }
 
                     if showValidation && !isValid {
-                        Text("Name is required")
+                        Text("Name and address are required")
                             .foregroundColor(BistroTheme.bad)
                             .font(.footnote)
                     }
@@ -66,13 +63,10 @@ struct RestaurantEditorView: View {
             return
         }
 
-        let latValue = Double(latitude.trimmingCharacters(in: .whitespacesAndNewlines))
-        let lonValue = Double(longitude.trimmingCharacters(in: .whitespacesAndNewlines))
-
         if let restaurant {
-            repository.updateRestaurant(restaurant, name: name, latitude: latValue, longitude: lonValue)
+            repository.updateRestaurant(restaurant, name: name, address: address)
         } else {
-            _ = repository.addRestaurant(name: name, latitude: latValue, longitude: lonValue)
+            _ = repository.addRestaurant(name: name, address: address)
         }
 
         dismiss()

@@ -33,9 +33,14 @@ struct RestaurantDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 HStack {
-                    Text(restaurant.name)
-                        .font(.title2.weight(.bold))
-                        .foregroundColor(BistroTheme.textPrimary)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(restaurant.name)
+                            .font(.title2.weight(.bold))
+                            .foregroundColor(BistroTheme.textPrimary)
+                        Text(restaurant.address)
+                            .font(.subheadline)
+                            .foregroundColor(BistroTheme.secondary)
+                    }
                     Spacer()
                     if let last = restaurant.lastEatenDate {
                         Text("Last: \(last, formatter: DateFormatter.shortDate)")

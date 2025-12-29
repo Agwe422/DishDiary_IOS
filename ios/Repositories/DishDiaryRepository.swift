@@ -20,11 +20,10 @@ struct DishDiaryRepository {
     }
 
     @discardableResult
-    func addRestaurant(name: String, latitude: Double? = nil, longitude: Double? = nil) -> Restaurant {
+    func addRestaurant(name: String, address: String) -> Restaurant {
         let restaurant = Restaurant(
             name: name.trimmingCharacters(in: .whitespacesAndNewlines),
-            latitude: latitude,
-            longitude: longitude,
+            address: address.trimmingCharacters(in: .whitespacesAndNewlines),
             dateAdded: Date()
         )
         context.insert(restaurant)
@@ -32,10 +31,9 @@ struct DishDiaryRepository {
         return restaurant
     }
 
-    func updateRestaurant(_ restaurant: Restaurant, name: String, latitude: Double? = nil, longitude: Double? = nil) {
+    func updateRestaurant(_ restaurant: Restaurant, name: String, address: String) {
         restaurant.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        restaurant.latitude = latitude
-        restaurant.longitude = longitude
+        restaurant.address = address.trimmingCharacters(in: .whitespacesAndNewlines)
         saveContext()
     }
 

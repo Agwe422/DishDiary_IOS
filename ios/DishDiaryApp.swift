@@ -2,20 +2,10 @@ import CoreSpotlight
 import SwiftData
 import SwiftUI
 
-final class AppRouter: ObservableObject {
-    @Published var selectedTab: AppTab = .journal
-    @Published var path = NavigationPath()
-}
-
-enum AppTab: Hashable {
-    case journal
-    case restaurants
-}
-
 @main
 struct DishDiaryApp: App {
     private let modelContainer: ModelContainer
-    @StateObject private var router = AppRouter()
+    @State private var path = NavigationPath()
 
     init() {
         let schema = Schema([Restaurant.self, Dish.self])
@@ -31,49 +21,30 @@ struct DishDiaryApp: App {
 
     var body: some Scene {
         WindowGroup {
-            RootView()
+            RootView(path: $path)
                 .modelContainer(modelContainer)
-                .environmentObject(router)
                 .task {
                     await LegacyCoreDataImporter.importIfNeeded(into: modelContainer.mainContext)
                 }
                 .onContinueUserActivity(CSSearchableItemActionType) { activity in
                     guard let id = activity.userInfo?[CSSearchableItemActivityIdentifier] as? String,
                           let uuid = UUID(uuidString: id) else { return }
-                    router.selectedTab = .journal
-                    router.path = NavigationPath()
-                    router.path.append(uuid)
+                    path = NavigationPath()
+                    path.append(uuid)
                 }
         }
     }
 }
 
 struct RootView: View {
-    @EnvironmentObject private var router: AppRouter
+    @Binding var path: NavigationPath
 
     var body: some View {
-        TabView(selection: $router.selectedTab) {
-            NavigationStack(path: $router.path) {
-                JournalView()
-                    .navigationDestination(for: UUID.self) { id in
-                        DishDetailRouteView(dishID: id)
-                    }
-            }
-            .tabItem {
-                Label("Journal", systemImage: "square.grid.2x2")
-            }
-            .tag(AppTab.journal)
-
-            NavigationStack {
-                RestaurantListView()
-                    .navigationDestination(for: UUID.self) { id in
-                        DishDetailRouteView(dishID: id)
-                    }
-            }
-            .tabItem {
-                Label("Restaurants", systemImage: "building.2")
-            }
-            .tag(AppTab.restaurants)
+        NavigationStack(path: $path) {
+            RestaurantListView()
+                .navigationDestination(for: UUID.self) { id in
+                    DishDetailRouteView(dishID: id)
+                }
         }
         .tint(BistroTheme.primary)
         .background(BistroTheme.canvas.ignoresSafeArea())

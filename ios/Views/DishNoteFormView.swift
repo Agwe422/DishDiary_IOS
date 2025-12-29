@@ -9,14 +9,11 @@ struct DishEditorView: View {
     let dish: Dish?
     let presetRestaurant: Restaurant?
 
-    @Query private var restaurants: [Restaurant]
-
     @State private var name: String
     @State private var rating: Double
     @State private var notes: String
     @State private var tagsText: String
     @State private var dateEaten: Date
-    @State private var selectedRestaurant: Restaurant?
     @State private var imageRefs: [String]
     @State private var pickerItems: [PhotosPickerItem] = []
     @State private var showValidation = false
@@ -35,7 +32,6 @@ struct DishEditorView: View {
         _notes = State(initialValue: dish?.notes ?? "")
         _tagsText = State(initialValue: dish?.tagDisplay ?? "")
         _dateEaten = State(initialValue: dish?.dateEaten ?? Date())
-        _selectedRestaurant = State(initialValue: dish?.restaurant ?? presetRestaurant)
         _imageRefs = State(initialValue: dish?.imageRefs ?? [])
     }
 
@@ -43,8 +39,13 @@ struct DishEditorView: View {
         max(0, maxImages - imageRefs.count)
     }
 
+    private var resolvedRestaurant: Restaurant? {
+        dish?.restaurant ?? presetRestaurant
+    }
+
     private var isValid: Bool {
         !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && resolvedRestaurant != nil
     }
 
     var body: some View {
@@ -58,11 +59,18 @@ struct DishEditorView: View {
                 }
 
                 Section("Restaurant") {
-                    Picker("Restaurant", selection: $selectedRestaurant) {
-                        Text("None").tag(Restaurant?.none)
-                        ForEach(restaurants) { restaurant in
-                            Text(restaurant.name).tag(Restaurant?.some(restaurant))
+                    if let restaurant = resolvedRestaurant {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(restaurant.name)
+                                .font(.headline)
+                                .foregroundColor(BistroTheme.textPrimary)
+                            Text(restaurant.address)
+                                .font(.subheadline)
+                                .foregroundColor(BistroTheme.secondary)
                         }
+                    } else {
+                        Text("Select a restaurant first")
+                            .foregroundColor(BistroTheme.bad)
                     }
                 }
 
@@ -134,7 +142,7 @@ struct DishEditorView: View {
                 }
 
                 if showValidation && !isValid {
-                    Text("Dish name is required")
+                    Text("Dish name and restaurant are required")
                         .font(.footnote)
                         .foregroundColor(BistroTheme.bad)
                 }
@@ -187,7 +195,7 @@ struct DishEditorView: View {
                 tags: tags,
                 dateEaten: dateEaten,
                 imageRefs: imageRefs,
-                restaurant: selectedRestaurant
+                restaurant: resolvedRestaurant
             )
         } else {
             _ = repository.addDish(
@@ -197,7 +205,7 @@ struct DishEditorView: View {
                 tags: tags,
                 dateEaten: dateEaten,
                 imageRefs: imageRefs,
-                restaurant: selectedRestaurant
+                restaurant: resolvedRestaurant
             )
         }
 
@@ -250,9 +258,12 @@ struct DishDetailView: View {
                     Text(dish.name)
                         .font(.title2.weight(.bold))
                         .foregroundColor(BistroTheme.textPrimary)
-                    if let restaurant = dish.restaurant?.name {
-                        Text(restaurant)
+                    if let restaurant = dish.restaurant {
+                        Text(restaurant.name)
                             .font(.headline)
+                            .foregroundColor(BistroTheme.secondary)
+                        Text(restaurant.address)
+                            .font(.subheadline)
                             .foregroundColor(BistroTheme.secondary)
                     }
                     StarRatingDisplay(rating: dish.rating, size: 18)

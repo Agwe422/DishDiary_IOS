@@ -83,12 +83,13 @@ struct RestaurantListView: View {
             guard !searchText.isEmpty else { return true }
             let query = searchText.lowercased()
             let matchName = restaurant.name.lowercased().contains(query)
+            let matchAddress = restaurant.address.lowercased().contains(query)
             let matchDish = restaurant.dishes.contains { dish in
                 dish.name.lowercased().contains(query)
                     || dish.notes.lowercased().contains(query)
                     || dish.tags.contains { $0.lowercased().contains(query) }
             }
-            return matchName || matchDish
+            return matchName || matchAddress || matchDish
         }
 
         return filtered.sorted(by: sortOption.sorter)
@@ -104,6 +105,9 @@ struct RestaurantListView: View {
                         Text(restaurant.name)
                             .font(.headline.weight(.semibold))
                             .foregroundColor(BistroTheme.textPrimary)
+                        Text(restaurant.address)
+                            .font(.subheadline)
+                            .foregroundColor(BistroTheme.secondary)
                         HStack(spacing: 12) {
                             Text("\(restaurant.dishCount) dishes")
                                 .font(.caption)
@@ -140,7 +144,7 @@ struct RestaurantListView: View {
                 }
             }
         }
-        .searchable(text: $searchText, prompt: "Search restaurants, dishes, notes")
+        .searchable(text: $searchText, prompt: "Search restaurants, addresses, dishes")
         .sheet(isPresented: $showingAddRestaurant) {
             RestaurantEditorView(restaurant: nil)
         }

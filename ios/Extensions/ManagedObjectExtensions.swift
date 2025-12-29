@@ -5,23 +5,20 @@ import SwiftData
 final class Restaurant {
     @Attribute(.unique) var id: UUID
     var name: String
-    var latitude: Double?
-    var longitude: Double?
+    var address: String
     var dateAdded: Date
-    @Relationship(deleteRule: .cascade, inverse: \Dish.restaurant) var dishes: [Dish]
+    @Relationship(deleteRule: .cascade) var dishes: [Dish]
 
     init(
         id: UUID = UUID(),
         name: String,
-        latitude: Double? = nil,
-        longitude: Double? = nil,
+        address: String,
         dateAdded: Date = Date(),
         dishes: [Dish] = []
     ) {
         self.id = id
         self.name = name
-        self.latitude = latitude
-        self.longitude = longitude
+        self.address = address
         self.dateAdded = dateAdded
         self.dishes = dishes
     }
@@ -36,12 +33,12 @@ final class Dish {
     var name: String
     var rating: Double
     var notes: String
-    @Attribute(.transformable) var tags: [String]
+    var tagsData: Data
     var dateEaten: Date
     var createdAt: Date
     var updatedAt: Date
-    @Attribute(.transformable) var imageRefs: [String]
-    @Relationship(inverse: \Restaurant.dishes) var restaurant: Restaurant?
+    var imageRefsData: Data
+    var restaurant: Restaurant?
 
     init(
         id: UUID = UUID(),
@@ -59,12 +56,22 @@ final class Dish {
         self.name = name
         self.rating = Dish.clampRating(rating)
         self.notes = notes
-        self.tags = tags
+        self.tagsData = Dish.encodeStringArray(tags)
         self.dateEaten = dateEaten
         self.createdAt = createdAt
         self.updatedAt = updatedAt
-        self.imageRefs = imageRefs
+        self.imageRefsData = Dish.encodeStringArray(imageRefs)
         self.restaurant = restaurant
+    }
+
+    var tags: [String] {
+        get { Dish.decodeStringArray(from: tagsData) }
+        set { tagsData = Dish.encodeStringArray(newValue) }
+    }
+
+    var imageRefs: [String] {
+        get { Dish.decodeStringArray(from: imageRefsData) }
+        set { imageRefsData = Dish.encodeStringArray(newValue) }
     }
 
     var tagDisplay: String {
@@ -73,5 +80,13 @@ final class Dish {
 
     static func clampRating(_ value: Double) -> Double {
         min(max(round(value * 2) / 2.0, 0.0), 5.0)
+    }
+
+    private static func encodeStringArray(_ values: [String]) -> Data {
+        (try? JSONEncoder().encode(values)) ?? Data()
+    }
+
+    private static func decodeStringArray(from data: Data) -> [String] {
+        (try? JSONDecoder().decode([String].self, from: data)) ?? []
     }
 }

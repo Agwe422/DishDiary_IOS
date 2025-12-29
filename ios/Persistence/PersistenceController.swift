@@ -30,8 +30,9 @@ enum LegacyCoreDataImporter {
 
         for legacyRestaurant in importedRestaurants {
             let name = (legacyRestaurant.value(forKey: "name") as? String) ?? "Untitled"
+            let address = (legacyRestaurant.value(forKey: "address") as? String) ?? ""
             let dateAdded = (legacyRestaurant.value(forKey: "createdAt") as? Date) ?? Date()
-            let restaurant = Restaurant(name: name, dateAdded: dateAdded)
+            let restaurant = Restaurant(name: name, address: address, dateAdded: dateAdded)
 
             if let notes = legacyRestaurant.value(forKey: "dishNotes") as? Set<NSManagedObject> {
                 for legacyDish in notes {
