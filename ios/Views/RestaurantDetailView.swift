@@ -115,6 +115,7 @@ struct RestaurantDetailView: View {
 
 struct DishDetailRouteView: View {
     @Query private var dishes: [Dish]
+    @State private var dishToEdit: Dish?
 
     init(dishID: UUID) {
         _dishes = Query(filter: #Predicate<Dish> { $0.id == dishID })
@@ -122,7 +123,10 @@ struct DishDetailRouteView: View {
 
     var body: some View {
         if let dish = dishes.first {
-            DishDetailView(dish: dish)
+            DishDetailView(dish: dish, onEdit: { dishToEdit = dish })
+                .sheet(item: $dishToEdit) { dish in
+                    DishEditorView(dish: dish)
+                }
         } else {
             ContentUnavailableView("Dish not found", systemImage: "exclamationmark.triangle")
                 .background(BistroTheme.canvas)

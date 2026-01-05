@@ -53,7 +53,7 @@ struct DishEditorView: View {
             Form {
                 Section("Dish") {
                     TextField("Name", text: $name)
-                        .onChange(of: name) { _ in showValidation = true }
+                        .onChange(of: name) { _, _ in showValidation = true }
                     StarRatingControl(rating: $rating)
                     DatePicker("Date eaten", selection: $dateEaten, displayedComponents: .date)
                 }
@@ -159,7 +159,7 @@ struct DishEditorView: View {
                         .disabled(!isValid)
                 }
             }
-            .onChange(of: pickerItems) { newItems in
+            .onChange(of: pickerItems) { _, newItems in
                 Task {
                     let newRefs = await PhotoPickerLoader.loadImageRefs(from: newItems)
                     await MainActor.run {
@@ -218,11 +218,16 @@ struct DishDetailView: View {
     @Environment(\.dismiss) private var dismiss
 
     let dish: Dish
+    let onEdit: () -> Void
 
     @State private var showingGallery = false
     @State private var selectedImageIndex = 0
-    @State private var showingEditor = false
     @State private var showDeleteConfirm = false
+
+    init(dish: Dish, onEdit: @escaping () -> Void = {}) {
+        self.dish = dish
+        self.onEdit = onEdit
+    }
 
     private var repository: DishDiaryRepository {
         DishDiaryRepository(context: context)
@@ -299,18 +304,13 @@ struct DishDetailView: View {
         .navigationTitle("Dish Detail")
         .toolbar {
             ToolbarItemGroup(placement: .navigationBarTrailing) {
-                Button("Edit") {
-                    showingEditor = true
-                }
+                Button("Edit") { onEdit() }
                 Button(role: .destructive) {
                     showDeleteConfirm = true
                 } label: {
                     Image(systemName: "trash")
                 }
             }
-        }
-        .sheet(isPresented: $showingEditor) {
-            DishEditorView(dish: dish)
         }
         .fullScreenCover(isPresented: $showingGallery) {
             GalleryView(

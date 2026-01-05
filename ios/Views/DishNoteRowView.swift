@@ -89,30 +89,28 @@ struct StarRatingControl: View {
 
     @State private var lastStep: Double = -1
     private let feedback = UIImpactFeedbackGenerator(style: .light)
+    private let starSpacing: CGFloat = 8
 
     var body: some View {
-        GeometryReader { proxy in
-            HStack(spacing: 8) {
-                ForEach(1...maxRating, id: \.self) { index in
-                    Image(systemName: symbol(for: index))
-                        .font(.system(size: size))
-                        .foregroundColor(BistroTheme.rating)
-                }
+        HStack(spacing: starSpacing) {
+            ForEach(1...maxRating, id: \.self) { index in
+                Image(systemName: symbol(for: index))
+                    .font(.system(size: size))
+                    .foregroundColor(BistroTheme.rating)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-            .contentShape(Rectangle())
-            .gesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { value in
-                        let newRating = ratingFrom(locationX: value.location.x, width: proxy.size.width)
-                        if newRating != rating {
-                            rating = newRating
-                            triggerHapticIfNeeded(newRating)
-                        }
-                    }
-            )
         }
-        .frame(height: size + 6)
+        .frame(width: totalWidth, height: size + 6, alignment: .leading)
+        .contentShape(Rectangle())
+        .gesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { value in
+                    let newRating = ratingFrom(locationX: value.location.x, width: totalWidth)
+                    if newRating != rating {
+                        rating = newRating
+                        triggerHapticIfNeeded(newRating)
+                    }
+                }
+        )
         .accessibilityLabel("Rating")
         .accessibilityValue("\(rating, specifier: "%.1f") out of 5")
         .accessibilityAdjustableAction { direction in
@@ -136,6 +134,11 @@ struct StarRatingControl: View {
             return "star.leadinghalf.filled"
         }
         return "star"
+    }
+
+    private var totalWidth: CGFloat {
+        let count = CGFloat(maxRating)
+        return (count * size) + (max(0, count - 1) * starSpacing)
     }
 
     private func ratingFrom(locationX: CGFloat, width: CGFloat) -> Double {

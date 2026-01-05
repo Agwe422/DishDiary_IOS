@@ -31,9 +31,9 @@ struct RestaurantEditorView: View {
             Form {
                 Section("Restaurant") {
                     TextField("Name", text: $name)
-                        .onChange(of: name) { _ in showValidation = true }
+                        .onChange(of: name) { _, _ in showValidation = true }
                     TextField("Street address", text: $address)
-                        .onChange(of: address) { _ in showValidation = true }
+                        .onChange(of: address) { _, _ in showValidation = true }
 
                     if showValidation && !isValid {
                         Text("Name and address are required")
